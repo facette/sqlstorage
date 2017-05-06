@@ -99,6 +99,10 @@ func (s *Storage) Save(v interface{}) error {
 	tx := s.db.Begin()
 	defer tx.Commit()
 
+	// Delete previous associations
+	if err := s.handleAssociations(tx, v, true); err != nil {
+		return err
+	}
 
 	if err := tx.Save(v).Error; err != nil {
 		return s.driver.NormalizeError(err)
@@ -126,10 +130,7 @@ func (s *Storage) Get(column string, values interface{}, v interface{}) error {
 		return s.driver.NormalizeError(err)
 	}
 
-	// Retrieve item-specific associations
-	s.applyAssociations(tx, v)
-
-	return nil
+	return s.handleAssociations(tx, v, false)
 }
 
 // Delete removes an existing item from the storage.
@@ -213,7 +214,9 @@ func (s *Storage) List(v interface{}, filters map[string]interface{}, sort []str
 		tx = tx.New()
 
 		for i, n := 0, rv.Len(); i < n; i++ {
-			s.applyAssociations(tx, rv.Index(i).Interface())
+			if err := s.handleAssociations(tx, rv.Index(i).Interface(), false); err != nil {
+				return 0, err
+			}
 		}
 	}
 
@@ -300,7 +303,7 @@ func (s *Storage) Search(values []interface{}, v interface{}, filters map[string
 	return count, nil
 }
 
-func (s *Storage) applyAssociations(tx *gorm.DB, v interface{}) {
+func (s *Storage) handleAssociations(tx *gorm.DB, v interface{}, delete bool) error {
 	rv := reflect.ValueOf(v)
 
 	rt := rv.Type()
@@ -309,8 +312,34 @@ func (s *Storage) applyAssociations(tx *gorm.DB, v interface{}) {
 	}
 
 	if fieldNames, ok := s.associations[rt]; ok {
+		tx = tx.New()
+
 		for _, name := range fieldNames {
-			tx.Model(v).Association(name).Find(reflect.Indirect(rv).FieldByName(name).Addr().Interface())
+			fv := reflect.Indirect(rv).FieldByName(name).Addr().Interface()
+
+			if delete {
+				scope := tx.NewScope(v)
+				if field, ok := scope.FieldByName(name); ok {
+					for idx, foreignKey := range field.Relationship.ForeignDBNames {
+						assocName := field.Relationship.AssociationForeignFieldNames[idx]
+						if assocField, ok := scope.FieldByName(assocName); ok {
+							tx = tx.Where(fmt.Sprintf("%v = ?", scope.Quote(foreignKey)), assocField.Field.Interface())
+						}
+					}
+
+					if err := tx.Delete(fv).Error; err != nil {
+						return s.driver.NormalizeError(err)
+					}
+				}
+
+				continue
+			}
+
+			if err := tx.Model(v).Association(name).Find(fv).Error; err != nil {
+				return s.driver.NormalizeError(err)
+			}
 		}
 	}
+
+	return nil
 }
