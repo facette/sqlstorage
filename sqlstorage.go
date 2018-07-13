@@ -68,6 +68,11 @@ func (s *Storage) Close() error {
 	return s.db.Close()
 }
 
+// DB returns the internal database instance.
+func (s *Storage) DB() *gorm.DB {
+	return s.db
+}
+
 // Migrate handles automatic migration of given item database models.
 func (s *Storage) Migrate(v ...interface{}) error {
 	return s.db.AutoMigrate(v...).Error
