@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/facette/logger"
-	"github.com/facette/maputil"
+	"facette.io/logger"
+	"facette.io/maputil"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 )

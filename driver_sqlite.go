@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/facette/maputil"
-	"github.com/facette/sliceutil"
+	"facette.io/maputil"
+	"facette.io/sliceutil"
 	"github.com/jinzhu/gorm"
 	"github.com/mattn/go-sqlite3"
 	"github.com/pkg/errors"

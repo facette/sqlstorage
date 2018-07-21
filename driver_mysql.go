@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/facette/maputil"
+	"facette.io/maputil"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"

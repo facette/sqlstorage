@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/facette/maputil"
+	"facette.io/maputil"
 	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
 	"github.com/pkg/errors"

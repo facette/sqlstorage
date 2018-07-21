@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"sort"
 
-	"github.com/facette/maputil"
+	"facette.io/maputil"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
 )
